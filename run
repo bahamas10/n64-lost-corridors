@@ -1,0 +1,4 @@
+#!/bin/sh
+exec /Applications/ares.app/Contents/MacOS/ares \
+	--setting Paths/Saves=/tmp \
+	*.z64
