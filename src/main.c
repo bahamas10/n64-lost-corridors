@@ -231,13 +231,14 @@ int main(void) {
 	console_set_debug(true);
 	srand(get_ticks());
 
-	display_init(RESOLUTION_320x240, DEPTH_32_BPP, 2, GAMMA_NONE, FILTERS_RESAMPLE);
+	display_init(RESOLUTION_320x240, DEPTH_32_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
 	timer_init();
 
 	new_timer(TIMER_TICKS(ANIMATION_DELAY * 1000), TF_CONTINUOUS, update_counter);
 
 	uint32_t black_color = graphics_make_color(0x00, 0x00, 0x00, 0xff);
 	uint32_t red_color = graphics_make_color(0xff, 0x00, 0x00, 0xff);
+	uint32_t link_color = graphics_make_color(0xff, 0x00, 0x00, 0xff);
 
 	Maze *maze = maze_create(MAZE_WIDTH, MAZE_HEIGHT);
 
@@ -258,6 +259,26 @@ int main(void) {
 
 				if (block->sides_seen > 0) {
 					int x = j * BLOCK_SIZE * 2;
+					int y = i * BLOCK_SIZE * 2;
+					graphics_draw_box(disp, x, y, BLOCK_SIZE, BLOCK_SIZE, link_color);
+				}
+				if (block->sides_seen & NORTH) {
+					int x = j * BLOCK_SIZE * 2;
+					int y = i * BLOCK_SIZE * 2 - BLOCK_SIZE;
+					graphics_draw_box(disp, x, y, BLOCK_SIZE, BLOCK_SIZE, red_color);
+				}
+				if (block->sides_seen & SOUTH) {
+					int x = j * BLOCK_SIZE * 2;
+					int y = i * BLOCK_SIZE * 2 + BLOCK_SIZE;
+					graphics_draw_box(disp, x, y, BLOCK_SIZE, BLOCK_SIZE, red_color);
+				}
+				if (block->sides_seen & EAST) {
+					int x = j * BLOCK_SIZE * 2 + BLOCK_SIZE;
+					int y = i * BLOCK_SIZE * 2;
+					graphics_draw_box(disp, x, y, BLOCK_SIZE, BLOCK_SIZE, red_color);
+				}
+				if (block->sides_seen & WEST) {
+					int x = j * BLOCK_SIZE * 2 - BLOCK_SIZE;
 					int y = i * BLOCK_SIZE * 2;
 					graphics_draw_box(disp, x, y, BLOCK_SIZE, BLOCK_SIZE, red_color);
 				}
