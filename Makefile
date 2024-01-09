@@ -6,7 +6,7 @@ include $(N64_INST)/include/n64.mk
 all: lost-corridors.z64
 .PHONY: all
 
-OBJS = $(BUILD_DIR)/main.o
+OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/maze.o
 
 lost-corridors.z64: N64_ROM_TITLE="Lost Corridors"
 
