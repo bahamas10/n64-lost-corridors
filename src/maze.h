@@ -58,7 +58,7 @@ typedef struct Maze {
 Maze *maze_create(int width, int height);
 
 // Run a single maze step
-void maze_step(Maze *maze);
+bool maze_step(Maze *maze);
 
 // Destroy the maze object and free its memory
 void maze_destroy(Maze *maze);
