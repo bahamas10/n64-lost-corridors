@@ -193,7 +193,9 @@ begin:
 
 // destroy the maze
 void maze_destroy(Maze *maze) {
-	assertf(maze != NULL, "maze_destroy called with NULL");
+	if (maze == NULL) {
+		return;
+	}
 
 	for (int i = 0; i < maze->height; i++) {
 		for (int j = 0; j < maze->width; j++) {

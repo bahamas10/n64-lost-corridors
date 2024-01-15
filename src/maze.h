@@ -7,8 +7,7 @@
  *
  * ```
  * Maze *maze = maze_create(16, 9);
- * maze_step(maze);
- * maze_step(maze);
+ * while (!maze_step(maze));
  * maze_destroy(maze);
  */
 
@@ -57,7 +56,7 @@ typedef struct Maze {
 // Create a maze object
 Maze *maze_create(int width, int height);
 
-// Run a single maze step
+// Run a single maze step - returns true if the maze is done
 bool maze_step(Maze *maze);
 
 // Destroy the maze object and free its memory
