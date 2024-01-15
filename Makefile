@@ -9,8 +9,10 @@ all: lost-corridors.z64
 OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/maze.o
 
 lost-corridors.z64: N64_ROM_TITLE="Lost Corridors"
+lost-corridors.z64: $(BUILD_DIR)/lost-corridors.dfs
 
 $(BUILD_DIR)/lost-corridors.elf: $(OBJS)
+$(BUILD_DIR)/lost-corridors.dfs: $(wildcard filesystem/*)
 
 clean:
 	rm -f $(BUILD_DIR)/* *.z64

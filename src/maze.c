@@ -66,8 +66,6 @@ static void maze_step_push(Maze *maze, int x, int y, MazeDirection direction) {
 	step->direction = direction;
 	maze->stack[maze->stack_ptr] = step;
 	maze->stack_ptr++;
-
-	debugf("stack push: cur len %u\n", maze->stack_ptr);
 }
 
 // pop a "step" off of the stack
@@ -81,7 +79,6 @@ static MazeStep *maze_step_pop(Maze *maze) {
 
 	maze->stack[maze->stack_ptr] = NULL;
 
-	debugf("stack pop: cur len %u\n", maze->stack_ptr);
 	return step;
 }
 
@@ -94,6 +91,7 @@ Maze *maze_create(int width, int height) {
 	maze->grid = safe_malloc(height * sizeof(int *), "maze_create height");
 	maze->stack_ptr = 0;
 
+	// initialize the grid
 	for (int i = 0; i < height; i++) {
 		maze->grid[i] = safe_malloc(width * sizeof(int *),
 		    "maze_create width");
@@ -129,15 +127,15 @@ Maze *maze_create(int width, int height) {
 	return maze;
 }
 
-// single step through the maze - returns a boolean if we should try again
-void maze_step(Maze *maze) {
+// single step through the maze - returns a boolean if we are done
+bool maze_step(Maze *maze) {
 begin:
 	// pop a step off the stack
 	MazeStep *step = maze_step_pop(maze);
 
 	if (step == NULL) {
 		// nothing to do - maze is done
-		return;
+		return true;
 	}
 
 	// copy the data from the step and free it - cx/cy == current x /
@@ -163,7 +161,6 @@ begin:
 	// ensure the neighbor is valid / exists
 	if (nx < 0 || nx >= maze->width || ny < 0 || ny >= maze->height) {
 		// out of bounds - try again
-		debugf("out of bounds\n");
 		goto begin;
 	}
 
@@ -190,8 +187,11 @@ begin:
 	for (int i = 0; i < 4; i++) {
 		maze_step_push(maze, nx, ny, directions[i]);
 	}
+
+	return false;
 }
 
+// destroy the maze
 void maze_destroy(Maze *maze) {
 	assertf(maze != NULL, "maze_destroy called with NULL");
 

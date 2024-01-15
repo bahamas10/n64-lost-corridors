@@ -1,2 +1,7 @@
 #!/bin/sh
+if [ ! -e filesystem/lost-corridors.wav64 ]; then
+	echo 'downloading music'
+	curl -o filesystem/lost-corridors.wav64 \
+		http://files.daveeddy.com/n64/music/lost-corridors.wav64
+fi
 exec npx libdragon make
