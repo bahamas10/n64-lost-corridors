@@ -22,9 +22,40 @@ unsigned long gAnimationCounter = 0;
 sprite_t *gIntroSprite = NULL;
 enum Page gCurrentPage = PAGE_INTRO;
 
+int gMazeSpeed = 3;
+int gMazeAnimationDelay = 40;
+
 // get total amount of milliseconds the n64 has been powered on
 static inline unsigned long get_total_ms(void) {
     return (timer_ticks() / (TICKS_PER_SECOND / 1000));
+}
+
+void set_delay() {
+	debugf("speed set to %d\n", gMazeSpeed);
+	switch (gMazeSpeed) {
+		case 0: gMazeAnimationDelay = 200; break;
+		case 1: gMazeAnimationDelay = 120; break;
+		case 2: gMazeAnimationDelay = 80; break;
+		case 3: gMazeAnimationDelay = 40; break;
+		case 4: gMazeAnimationDelay = 20; break;
+		case 5: gMazeAnimationDelay = 6; break;
+	}
+}
+
+void increase_speed() {
+	gMazeSpeed++;
+	if (gMazeSpeed > 5) {
+		gMazeSpeed = 5;
+	}
+	set_delay();
+}
+
+void decrease_speed() {
+	gMazeSpeed--;
+	if (gMazeSpeed < 0) {
+		gMazeSpeed = 0;
+	}
+	set_delay();
 }
 
 void display_intro_page(unsigned long delta) {
@@ -37,7 +68,7 @@ void display_intro_page(unsigned long delta) {
 	struct controller_data keys = get_keys_down();
 
 	if (keys.c[0].start) {
-		debugf("intro: start pressed - loading maze page");
+		debugf("intro: start pressed - loading maze page\n");
 		maze_destroy(gMaze);
 		gMaze = maze_create(MAZE_WIDTH, MAZE_HEIGHT);
 		gCurrentPage = PAGE_MAZE;
@@ -64,23 +95,27 @@ void display_maze_page(unsigned long delta) {
 
 	if (keys.c[0].A) {
 		// reset the maze if A is pressed
-		debugf("maze: A pressed - recreating maze");
+		debugf("maze: A pressed - recreating maze\n");
 		maze_destroy(gMaze);
 		gMaze = maze_create(MAZE_WIDTH, MAZE_HEIGHT);
 	} else if (keys.c[0].B) {
 		// back out to the intro page
-		debugf("maze: B pressed - loading intro page");
+		debugf("maze: B pressed - loading intro page\n");
 		gCurrentPage = PAGE_INTRO;
 		maze_destroy(gMaze);
 		gMaze = NULL;
 		return;
+	} else if (keys.c[0].C_up) {
+		increase_speed();
+	} else if (keys.c[0].C_down) {
+		decrease_speed();
 	}
 
 	// check if we need to advance the maze
 	gAnimationCounter += delta;
-	while (gAnimationCounter > ANIMATION_DELAY) {
+	while (gAnimationCounter > gMazeAnimationDelay) {
 		maze_step(gMaze);
-		gAnimationCounter -= ANIMATION_DELAY;
+		gAnimationCounter -= gMazeAnimationDelay;
 	}
 
 	// draw the graphics
