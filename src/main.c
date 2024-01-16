@@ -8,7 +8,7 @@
 #define ANIMATION_DELAY 40 // in milliseconds
 
 #define MAZE_WIDTH 32
-#define MAZE_HEIGHT 24
+#define MAZE_HEIGHT 22
 #define BLOCK_SIZE 5
 
 // pages as seen by the UID
@@ -33,27 +33,27 @@ static inline unsigned long get_total_ms(void) {
 void set_delay() {
 	debugf("speed set to %d\n", gMazeSpeed);
 	switch (gMazeSpeed) {
-		case 0: gMazeAnimationDelay = 200; break;
-		case 1: gMazeAnimationDelay = 120; break;
-		case 2: gMazeAnimationDelay = 80; break;
-		case 3: gMazeAnimationDelay = 40; break;
-		case 4: gMazeAnimationDelay = 20; break;
-		case 5: gMazeAnimationDelay = 6; break;
+		case 1: gMazeAnimationDelay = 200; break;
+		case 2: gMazeAnimationDelay = 120; break;
+		case 3: gMazeAnimationDelay = 80; break;
+		case 4: gMazeAnimationDelay = 40; break;
+		case 5: gMazeAnimationDelay = 20; break;
+		case 6: gMazeAnimationDelay = 6; break;
 	}
 }
 
 void increase_speed() {
 	gMazeSpeed++;
-	if (gMazeSpeed > 5) {
-		gMazeSpeed = 5;
+	if (gMazeSpeed > 6) {
+		gMazeSpeed = 6;
 	}
 	set_delay();
 }
 
 void decrease_speed() {
 	gMazeSpeed--;
-	if (gMazeSpeed < 0) {
-		gMazeSpeed = 0;
+	if (gMazeSpeed < 1) {
+		gMazeSpeed = 1;
 	}
 	set_delay();
 }
@@ -122,6 +122,7 @@ void display_maze_page(unsigned long delta) {
 	while ((disp = display_lock()) == NULL);
 	graphics_fill_screen(disp, black_color);
 
+	// draw the maze
 	for (int i = 0; i < gMaze->height; i++) {
 		for (int j = 0; j < gMaze->width; j++) {
 			MazeBlock *block = gMaze->grid[i][j];
@@ -161,6 +162,10 @@ void display_maze_page(unsigned long delta) {
 		}
 	}
 
+	// draw the status bar
+	char buf[100];
+	sprintf(buf, "speed %d/6", gMazeSpeed);
+	graphics_draw_text(disp, 5, 220, buf);
 
 	display_show(disp);
 }
