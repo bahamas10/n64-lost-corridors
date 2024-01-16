@@ -7,6 +7,9 @@
 
 #define ANIMATION_DELAY 40 // in milliseconds
 
+#define SCREEN_WIDTH 320
+#define SCREEN_HEIGHT 240
+
 #define MAZE_WIDTH 32
 #define MAZE_HEIGHT 22
 #define BLOCK_SIZE 5
@@ -28,6 +31,13 @@ int gMazeAnimationDelay = 40;
 // get total amount of milliseconds the n64 has been powered on
 static inline unsigned long get_total_ms(void) {
     return (timer_ticks() / (TICKS_PER_SECOND / 1000));
+}
+
+uint32_t get_color(int x, int y) {
+	int r = x * 100 / SCREEN_WIDTH * 255 / 100;
+	int g = y * 100 / SCREEN_HEIGHT * 255 / 100;
+	int b = 128;
+	return graphics_make_color(r, g, b, 0xff);
 }
 
 void set_delay() {
@@ -87,7 +97,6 @@ void display_maze_page(unsigned long delta) {
 	surface_t *disp;
 
 	uint32_t black_color = graphics_make_color(0x00, 0x00, 0x00, 0xff);
-	uint32_t red_color = graphics_make_color(0x99, 0x00, 0x00, 0xff);
 
 	// check for input
 	controller_scan();
@@ -131,32 +140,37 @@ void display_maze_page(unsigned long delta) {
 			if (block->sides_seen > 0) {
 				int x = pad + j * BLOCK_SIZE * 2;
 				int y = pad + i * BLOCK_SIZE * 2;
+				uint32_t color = get_color(x, y);
 				graphics_draw_box(disp, x, y,
-				    BLOCK_SIZE, BLOCK_SIZE, red_color);
+				    BLOCK_SIZE, BLOCK_SIZE, color);
 			}
 			if (block->sides_seen & MAZE_NORTH) {
 				int x = pad + j * BLOCK_SIZE * 2;
 				int y = pad + i * BLOCK_SIZE * 2 - BLOCK_SIZE;
+				uint32_t color = get_color(x, y);
 				graphics_draw_box(disp, x, y,
-				    BLOCK_SIZE, BLOCK_SIZE, red_color);
+				    BLOCK_SIZE, BLOCK_SIZE, color);
 			}
 			if (block->sides_seen & MAZE_SOUTH) {
 				int x = pad + j * BLOCK_SIZE * 2;
 				int y = pad + i * BLOCK_SIZE * 2 + BLOCK_SIZE;
+				uint32_t color = get_color(x, y);
 				graphics_draw_box(disp, x, y,
-				    BLOCK_SIZE, BLOCK_SIZE, red_color);
+				    BLOCK_SIZE, BLOCK_SIZE, color);
 			}
 			if (block->sides_seen & MAZE_EAST) {
 				int x = pad + j * BLOCK_SIZE * 2 + BLOCK_SIZE;
 				int y = pad + i * BLOCK_SIZE * 2;
+				uint32_t color = get_color(x, y);
 				graphics_draw_box(disp, x, y,
-				    BLOCK_SIZE, BLOCK_SIZE, red_color);
+				    BLOCK_SIZE, BLOCK_SIZE, color);
 			}
 			if (block->sides_seen & MAZE_WEST) {
 				int x = pad + j * BLOCK_SIZE * 2 - BLOCK_SIZE;
 				int y = pad + i * BLOCK_SIZE * 2;
+				uint32_t color = get_color(x, y);
 				graphics_draw_box(disp, x, y,
-				    BLOCK_SIZE, BLOCK_SIZE, red_color);
+				    BLOCK_SIZE, BLOCK_SIZE, color);
 			}
 
 		}
