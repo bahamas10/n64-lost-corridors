@@ -4,6 +4,7 @@
 #include <libdragon.h>
 
 #include "maze.h"
+#include "ryb2rgb.h"
 
 #define ANIMATION_DELAY 40 // in milliseconds
 
@@ -27,16 +28,31 @@ enum Page gCurrentPage = PAGE_INTRO;
 
 int gMazeSpeed = 3;
 int gMazeAnimationDelay = 40;
+float gRandomMagic[8][3];
 
 // get total amount of milliseconds the n64 has been powered on
 static inline unsigned long get_total_ms(void) {
     return (timer_ticks() / (TICKS_PER_SECOND / 1000));
 }
 
+void randomize_magic() {
+        for (int i = 0; i < 8; i++) {
+                for (int j = 0; j < 3; j++) {
+                        gRandomMagic[i][j] = (float)rand()/(float)RAND_MAX;
+                }
+        }
+}
+
 uint32_t get_color(int x, int y) {
 	int r = x * 100 / SCREEN_WIDTH * 255 / 100;
 	int g = y * 100 / SCREEN_HEIGHT * 255 / 100;
 	int b = 128;
+
+	RGB color = interpolate2rgb(r / 255.0, g / 255.0, b / 255.0, gRandomMagic);
+	r = color.r * 255;
+	g = color.g * 255;
+	b = color.b * 255;
+
 	return graphics_make_color(r, g, b, 0xff);
 }
 
@@ -118,6 +134,8 @@ void display_maze_page(unsigned long delta) {
 		increase_speed();
 	} else if (keys.c[0].C_down) {
 		decrease_speed();
+	} else if (keys.c[0].C_left) {
+		randomize_magic();
 	}
 
 	// check if we need to advance the maze
@@ -214,10 +232,14 @@ int main(void) {
 	wav64_open(&wav, "rom:/lost-corridors.wav64");
 	wav64_play(&wav, 0);
 
+	// load the intro sprite
 	int fp = dfs_open("/intro.sprite");
 	gIntroSprite = malloc(dfs_size(fp));
 	dfs_read(gIntroSprite, 1, dfs_size(fp), fp);
 	dfs_close(fp);
+
+	// init the magic values
+	randomize_magic();
 
 	unsigned long then = get_total_ms();
 	while (true) {
