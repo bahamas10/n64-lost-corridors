@@ -31,14 +31,15 @@ $ ./compile
 $ open lost-corridors.z64
 ```
 
-Check out the song here:
 
-https://www.youtube.com/watch?v=RCjLs9koZQg
-
-Algorithm
+More Info
 ---------
 
-More Info: https://weblog.jamisbuck.org/2010/12/27/maze-generation-recursive-backtracking
+My JavaScript Implementation: https://bahamas10.github.io/lost-corridors/
+
+My song "Lost Corridors": https://www.youtube.com/watch?v=RCjLs9koZQg
+
+The Algorithm: https://weblog.jamisbuck.org/2010/12/27/maze-generation-recursive-backtracking
 
 License
 -------
