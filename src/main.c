@@ -12,7 +12,7 @@
 #define SCREEN_HEIGHT 240
 
 #define MAZE_WIDTH 32
-#define MAZE_HEIGHT 22
+#define MAZE_HEIGHT 24
 #define BLOCK_SIZE 5
 
 // pages as seen by the UID
@@ -22,13 +22,19 @@ enum Page {
 };
 
 Maze *gMaze = NULL;
-unsigned long gAnimationCounter = 0;
+
+int gMazeAnimationCounter = 0;
+int gMazeSpeed = 3;
+int gMazeAnimationDelay;
+
+int gStatusAnimationCounter = 0;
+int gStatusAnimationLength = 2 * 1000 + 500; // 2.5 seconds
+
 sprite_t *gIntroSprite = NULL;
 enum Page gCurrentPage = PAGE_INTRO;
 
-int gMazeSpeed = 3;
-int gMazeAnimationDelay = 40;
 float gRandomMagic[8][3];
+bool gColorEnabled = false;
 
 // get total amount of milliseconds the n64 has been powered on
 static inline unsigned long get_total_ms(void) {
@@ -36,6 +42,7 @@ static inline unsigned long get_total_ms(void) {
 }
 
 void randomize_magic() {
+	debugf("colors randomized\n");
         for (int i = 0; i < 8; i++) {
                 for (int j = 0; j < 3; j++) {
                         gRandomMagic[i][j] = (float)rand()/(float)RAND_MAX;
@@ -44,19 +51,28 @@ void randomize_magic() {
 }
 
 uint32_t get_color(int x, int y) {
-	int r = x * 100 / SCREEN_WIDTH * 255 / 100;
-	int g = y * 100 / SCREEN_HEIGHT * 255 / 100;
-	int b = 128;
+	int r, g, b;
 
-	RGB color = interpolate2rgb(r / 255.0, g / 255.0, b / 255.0, gRandomMagic);
-	r = color.r * 255;
-	g = color.g * 255;
-	b = color.b * 255;
+	if (gColorEnabled) {
+		r = x * 100 / SCREEN_WIDTH * 255 / 100;
+		g = y * 100 / SCREEN_HEIGHT * 255 / 100;
+		 b = 128;
+
+		RGB color = interpolate2rgb(r / 255.0, g / 255.0, b / 255.0, gRandomMagic);
+		r = color.r * 255;
+		g = color.g * 255;
+		b = color.b * 255;
+	} else {
+		// taken from https://www.youtube.com/watch?v=RCjLs9koZQg
+		r = 110;
+		g = 78;
+		b = 40;
+	}
 
 	return graphics_make_color(r, g, b, 0xff);
 }
 
-void set_delay() {
+void set_speed() {
 	debugf("speed set to %d\n", gMazeSpeed);
 	switch (gMazeSpeed) {
 		case 1: gMazeAnimationDelay = 200; break;
@@ -66,6 +82,11 @@ void set_delay() {
 		case 5: gMazeAnimationDelay = 20; break;
 		case 6: gMazeAnimationDelay = 6; break;
 	}
+	gStatusAnimationCounter = 3 * 1000;
+}
+
+void init_speed() {
+	set_speed();
 }
 
 void increase_speed() {
@@ -73,7 +94,7 @@ void increase_speed() {
 	if (gMazeSpeed > 6) {
 		gMazeSpeed = 6;
 	}
-	set_delay();
+	set_speed();
 }
 
 void decrease_speed() {
@@ -81,7 +102,7 @@ void decrease_speed() {
 	if (gMazeSpeed < 1) {
 		gMazeSpeed = 1;
 	}
-	set_delay();
+	set_speed();
 }
 
 void display_intro_page(unsigned long delta) {
@@ -97,6 +118,7 @@ void display_intro_page(unsigned long delta) {
 		debugf("intro: start pressed - loading maze page\n");
 		maze_destroy(gMaze);
 		gMaze = maze_create(MAZE_WIDTH, MAZE_HEIGHT);
+		gStatusAnimationCounter = 0;
 		gCurrentPage = PAGE_MAZE;
 		return;
 	}
@@ -135,14 +157,17 @@ void display_maze_page(unsigned long delta) {
 	} else if (keys.c[0].C_down) {
 		decrease_speed();
 	} else if (keys.c[0].C_left) {
+		gColorEnabled = false;
+	} else if (keys.c[0].C_right) {
+		gColorEnabled = true;
 		randomize_magic();
 	}
 
 	// check if we need to advance the maze
-	gAnimationCounter += delta;
-	while (gAnimationCounter > gMazeAnimationDelay) {
+	gMazeAnimationCounter += delta;
+	while (gMazeAnimationCounter > gMazeAnimationDelay) {
 		maze_step(gMaze);
-		gAnimationCounter -= gMazeAnimationDelay;
+		gMazeAnimationCounter -= gMazeAnimationDelay;
 	}
 
 	// draw the graphics
@@ -194,10 +219,17 @@ void display_maze_page(unsigned long delta) {
 		}
 	}
 
-	// draw the status bar
-	char buf[100];
-	sprintf(buf, "speed %d/6", gMazeSpeed);
-	graphics_draw_text(disp, 5, 220, buf);
+	// check if we need to draw the speed status
+	gStatusAnimationCounter -= delta;
+	if (gStatusAnimationCounter < 0) {
+		gStatusAnimationCounter = 0;
+	}
+	if (gStatusAnimationCounter > 0) {
+		// draw the status bar
+		char buf[100];
+		sprintf(buf, "speed %d/6", gMazeSpeed);
+		graphics_draw_text(disp, 12, 12, buf);
+	}
 
 	display_show(disp);
 }
@@ -240,6 +272,9 @@ int main(void) {
 
 	// init the magic values
 	randomize_magic();
+
+	// init speed
+	init_speed();
 
 	unsigned long then = get_total_ms();
 	while (true) {
