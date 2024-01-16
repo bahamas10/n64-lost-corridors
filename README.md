@@ -6,12 +6,11 @@ Algorithm designed specifically for the N64 using [libdragon](https://libdragon.
 
 ![intro](/screenshots/intro.png)
 
-![maze](/screenshots/maze.png)
 
 How To
 -------
 
-JUST GIVE ME THE z64 ROM FILE:
+**JUST GIVE ME THE z64 ROM FILE**:
 
 http://files.daveeddy.com/n64/roms/lost-corridors.z64
 
@@ -31,6 +30,9 @@ $ ./compile
 $ open lost-corridors.z64
 ```
 
+This will create `lost-corridors.z64` which can be used in an N64 emulator or
+flash cart.
+
 
 More Info
 ---------
@@ -40,6 +42,21 @@ My JavaScript Implementation: https://bahamas10.github.io/lost-corridors/
 My song "Lost Corridors": https://www.youtube.com/watch?v=RCjLs9koZQg
 
 The Algorithm: https://weblog.jamisbuck.org/2010/12/27/maze-generation-recursive-backtracking
+
+Screenshots
+-----------
+
+Maze in progress with static color
+
+![maze-start-no-color](/screenshots/maze-start-no-color.png)
+
+Maze almost done with randomized colors
+
+![maze-middle-color](/screenshots/maze-middle-color.png)
+
+Maze finished with randomized colors
+
+![maze-end-color](/screenshots/maze-end-color.png)
 
 License
 -------
