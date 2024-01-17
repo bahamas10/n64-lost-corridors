@@ -51,7 +51,7 @@ void switch_scene(enum Scene scene);
 
 // get total amount of milliseconds the n64 has been powered on
 static inline unsigned long get_total_ms(void) {
-    return (timer_ticks() / (TICKS_PER_SECOND / 1000));
+	return (timer_ticks() / (TICKS_PER_SECOND / 1000));
 }
 
 // randomize the colors used by ryb2rgb
