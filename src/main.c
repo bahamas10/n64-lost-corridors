@@ -1,4 +1,4 @@
-//#define NDEBUG
+#define NDEBUG
 #include <stdio.h>
 
 #include <libdragon.h>
@@ -56,7 +56,7 @@ uint32_t get_color(int x, int y) {
 	if (gColorEnabled) {
 		r = x * 100 / SCREEN_WIDTH * 255 / 100;
 		g = y * 100 / SCREEN_HEIGHT * 255 / 100;
-		 b = 128;
+		b = 128;
 
 		RGB color = interpolate2rgb(r / 255.0, g / 255.0, b / 255.0, gRandomMagic);
 		r = color.r * 255;
@@ -228,7 +228,7 @@ void display_maze_page(unsigned long delta) {
 		// draw the status bar
 		char buf[100];
 		sprintf(buf, "speed %d/6", gMazeSpeed);
-		graphics_draw_text(disp, 12, 12, buf);
+		graphics_draw_text(disp, 18, 18, buf);
 	}
 
 	display_show(disp);

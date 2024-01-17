@@ -33,6 +33,21 @@ $ open lost-corridors.z64
 This will create `lost-corridors.z64` which can be used in an N64 emulator or
 flash cart.
 
+Controls
+--------
+
+In the menu
+
+- `start` - start the maze illustration
+
+In the maze
+
+- `A` - restart the maze
+- `B` - go back to the main menu
+- `C-up` - speed up
+- `C-down` - speed down
+- `C-left` - disable randomized colors
+- `C-right` - enable and randomize colors
 
 More Info
 ---------

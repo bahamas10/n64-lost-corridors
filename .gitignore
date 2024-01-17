@@ -1,3 +1,4 @@
 *.z64
 build/
 filesystem/*.wav64
+.DS_Store
