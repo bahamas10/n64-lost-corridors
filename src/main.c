@@ -6,41 +6,55 @@
 #include "maze.h"
 #include "ryb2rgb.h"
 
-#define ANIMATION_DELAY 40 // in milliseconds
+#define DEFAULT_MAZE_SPEED 3 // init speed - can be 1-6 inclusive
+#define SPEED_DIALOG_SHOW_TIME (2 * 1000 + 500) // 2.5 seconds
 
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
 
+// you can change these - but a lot of the code is built around the maze being
+// divisible by the screen size so it could result in weird things happening if
+// you do.
 #define MAZE_WIDTH 32
 #define MAZE_HEIGHT 24
 #define BLOCK_SIZE 5
 
-// pages as seen by the UID
-enum Page {
-        PAGE_INTRO = 0,
-        PAGE_MAZE = 1,
+// "scenes" for the game
+enum Scene {
+	SCENE_MAIN_MENU = 0,
+	SCENE_MAZE = 1,
 };
 
+// the current scene we are displaying
+enum Scene gCurrentScene;
+
+// the current maze object itself from maze.c
 Maze *gMaze = NULL;
 
+// maze animation and speed variables
 int gMazeAnimationCounter = 0;
 int gMazeSpeed = 3;
 int gMazeAnimationDelay;
 
+// how long to show the "speed x/6" dialog
 int gStatusAnimationCounter = 0;
-int gStatusAnimationLength = 2 * 1000 + 500; // 2.5 seconds
 
+// the intro menu sprite object (loaded once and forever held in memory)
 sprite_t *gIntroSprite = NULL;
-enum Page gCurrentPage = PAGE_INTRO;
 
+// random color mode related variables
 float gRandomMagic[8][3];
 bool gColorEnabled = false;
+
+// function prototypes
+void switch_scene(enum Scene scene);
 
 // get total amount of milliseconds the n64 has been powered on
 static inline unsigned long get_total_ms(void) {
     return (timer_ticks() / (TICKS_PER_SECOND / 1000));
 }
 
+// randomize the colors used by ryb2rgb
 void randomize_magic() {
 	debugf("colors randomized\n");
         for (int i = 0; i < 8; i++) {
@@ -50,6 +64,7 @@ void randomize_magic() {
         }
 }
 
+// given a location on screen figure out the color to use for it
 uint32_t get_color(int x, int y) {
 	int r, g, b;
 
@@ -63,7 +78,8 @@ uint32_t get_color(int x, int y) {
 		g = color.g * 255;
 		b = color.b * 255;
 	} else {
-		// taken from https://www.youtube.com/watch?v=RCjLs9koZQg
+		// static color - taken from
+		// https://www.youtube.com/watch?v=RCjLs9koZQg
 		r = 110;
 		g = 78;
 		b = 40;
@@ -72,7 +88,9 @@ uint32_t get_color(int x, int y) {
 	return graphics_make_color(r, g, b, 0xff);
 }
 
-void set_speed() {
+// set the speed
+void set_speed(int speed) {
+	gMazeSpeed = speed;
 	debugf("speed set to %d\n", gMazeSpeed);
 	switch (gMazeSpeed) {
 		case 1: gMazeAnimationDelay = 200; break;
@@ -82,30 +100,34 @@ void set_speed() {
 		case 5: gMazeAnimationDelay = 20; break;
 		case 6: gMazeAnimationDelay = 6; break;
 	}
-	gStatusAnimationCounter = 3 * 1000;
 }
 
-void init_speed() {
-	set_speed();
-}
-
+// increase the speed by one (or no-op if already max)
 void increase_speed() {
-	gMazeSpeed++;
-	if (gMazeSpeed > 6) {
-		gMazeSpeed = 6;
+	int speed = gMazeSpeed;
+	if (++speed > 6) {
+		speed = 6;
 	}
-	set_speed();
+	set_speed(speed);
 }
 
+// decrease the speed by one (or no-op if already min)
 void decrease_speed() {
-	gMazeSpeed--;
-	if (gMazeSpeed < 1) {
-		gMazeSpeed = 1;
+	int speed = gMazeSpeed;
+	if (--speed < 1) {
+		speed = 1;
 	}
-	set_speed();
+	set_speed(speed);
 }
 
-void display_intro_page(unsigned long delta) {
+// called when the menu scene is about be displayed
+void init_main_menu_scene() {
+	maze_destroy(gMaze);
+	gMaze = NULL;
+}
+
+// display logic for the intro menu Scene
+void render_main_menu_scene(unsigned long delta) {
 	surface_t *disp;
 
 	uint32_t black_color = graphics_make_color(0x00, 0x00, 0x00, 0xff);
@@ -115,11 +137,9 @@ void display_intro_page(unsigned long delta) {
 	struct controller_data keys = get_keys_down();
 
 	if (keys.c[0].start) {
-		debugf("intro: start pressed - loading maze page\n");
-		maze_destroy(gMaze);
-		gMaze = maze_create(MAZE_WIDTH, MAZE_HEIGHT);
-		gStatusAnimationCounter = 0;
-		gCurrentPage = PAGE_MAZE;
+		debugf("main-menu: start pressed - loading maze scene\n");
+
+		switch_scene(SCENE_MAZE);
 		return;
 	}
 
@@ -131,7 +151,22 @@ void display_intro_page(unsigned long delta) {
 	display_show(disp);
 }
 
-void display_maze_page(unsigned long delta) {
+// called when the maze scene is about to be displayed
+void init_maze_scene() {
+	// reset the maze
+	maze_destroy(gMaze);
+	gMaze = maze_create(MAZE_WIDTH, MAZE_HEIGHT);
+
+	// reset the animation counters
+	gStatusAnimationCounter = 0;
+
+	// reset colors and speed
+	gColorEnabled = false;
+	set_speed(DEFAULT_MAZE_SPEED);
+}
+
+// called when the maze scene is being rendered (every frame)
+void render_maze_scene(unsigned long delta) {
 	surface_t *disp;
 
 	uint32_t black_color = graphics_make_color(0x00, 0x00, 0x00, 0xff);
@@ -141,24 +176,32 @@ void display_maze_page(unsigned long delta) {
 	struct controller_data keys = get_keys_down();
 
 	if (keys.c[0].A) {
-		// reset the maze if A is pressed
 		debugf("maze: A pressed - recreating maze\n");
+
+		// recreate the maze
 		maze_destroy(gMaze);
 		gMaze = maze_create(MAZE_WIDTH, MAZE_HEIGHT);
 	} else if (keys.c[0].B) {
-		// back out to the intro page
-		debugf("maze: B pressed - loading intro page\n");
-		gCurrentPage = PAGE_INTRO;
-		maze_destroy(gMaze);
-		gMaze = NULL;
+		debugf("maze: B pressed - loading main menu scene\n");
+
+		// load the main menu scene
+		switch_scene(SCENE_MAIN_MENU);
 		return;
 	} else if (keys.c[0].C_up) {
+		// increase the speed and show the animation
+
 		increase_speed();
+		gStatusAnimationCounter = SPEED_DIALOG_SHOW_TIME;
 	} else if (keys.c[0].C_down) {
+		// decrease the speed and show the animation
+
 		decrease_speed();
+		gStatusAnimationCounter = SPEED_DIALOG_SHOW_TIME;
 	} else if (keys.c[0].C_left) {
+		// disable random colors
 		gColorEnabled = false;
 	} else if (keys.c[0].C_right) {
+		// enable random colors
 		gColorEnabled = true;
 		randomize_magic();
 	}
@@ -234,6 +277,15 @@ void display_maze_page(unsigned long delta) {
 	display_show(disp);
 }
 
+// called to switch active scene
+void switch_scene(enum Scene scene) {
+	gCurrentScene = scene;
+	switch (scene) {
+		case SCENE_MAIN_MENU: init_main_menu_scene(); break;
+		case SCENE_MAZE: init_maze_scene(); break;
+	}
+}
+
 // main
 int main(void) {
 	// init console
@@ -264,7 +316,7 @@ int main(void) {
 	wav64_open(&wav, "rom:/lost-corridors.wav64");
 	wav64_play(&wav, 0);
 
-	// load the intro sprite
+	// load the main menu sprite
 	int fp = dfs_open("/intro.sprite");
 	gIntroSprite = malloc(dfs_size(fp));
 	dfs_read(gIntroSprite, 1, dfs_size(fp), fp);
@@ -273,8 +325,8 @@ int main(void) {
 	// init the magic values
 	randomize_magic();
 
-	// init speed
-	init_speed();
+	// init the default scene
+	switch_scene(SCENE_MAIN_MENU);
 
 	unsigned long then = get_total_ms();
 	while (true) {
@@ -289,10 +341,10 @@ int main(void) {
 			audio_write_end();
 		}
 
-		// handle page-specific logic
-		switch (gCurrentPage) {
-			case PAGE_INTRO: display_intro_page(delta); break;
-			case PAGE_MAZE: display_maze_page(delta); break;
+		// handle scene-specific logic
+		switch (gCurrentScene) {
+			case SCENE_MAIN_MENU: render_main_menu_scene(delta); break;
+			case SCENE_MAZE: render_maze_scene(delta); break;
 		}
 	}
 }
