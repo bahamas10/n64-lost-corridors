@@ -105,8 +105,8 @@ void set_speed(int speed) {
 // increase the speed by one (or no-op if already max)
 void increase_speed() {
 	int speed = gMazeSpeed;
-	if (++speed > 6) {
-		speed = 6;
+	if (speed < 6) {
+		speed++;
 	}
 	set_speed(speed);
 }
@@ -114,8 +114,8 @@ void increase_speed() {
 // decrease the speed by one (or no-op if already min)
 void decrease_speed() {
 	int speed = gMazeSpeed;
-	if (--speed < 1) {
-		speed = 1;
+	if (speed > 1) {
+		speed--;
 	}
 	set_speed(speed);
 }
